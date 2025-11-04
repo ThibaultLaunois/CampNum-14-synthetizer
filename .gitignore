@@ -1,0 +1,8 @@
+.vscode/
+bin/
+obj/
+addons.make
+audioOutputExample.code-workspace
+audioOutputExample.png
+config.make
+Makefile
