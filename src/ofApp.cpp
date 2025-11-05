@@ -229,9 +229,9 @@ void ofApp::keyPressed(int key){
 
 	// --- Stream control ---
 
-	if( key == 's' ){soundStream.start(); return; }
+	if( key == 'o' ){soundStream.start(); return; }
 		
-	if( key == 'e' ){soundStream.stop(); return; }
+	if( key == 'p' ){soundStream.stop(); return; }
 
 
 	// --- Synthesize key control (SAM edit) ---
