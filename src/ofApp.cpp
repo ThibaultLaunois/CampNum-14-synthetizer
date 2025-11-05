@@ -1,19 +1,26 @@
 #include "ofApp.h"
 
 //--------------------------------------------------------------
-void ofApp::setup(){
+void ofApp::setup() {
 
 	ofBackground(34, 34, 34);
 	
 	int bufferSize		= 512;
+	
 	sampleRate 			= 44100;
+	
 	phase 				= 0;
+	
 	phaseAdder 			= 0.0f;
+	
 	phaseAdderTarget 	= 0.0f;
+	
 	volume				= 0.1f;
+	
 	bNoise 				= false;
 
 	lAudio.assign(bufferSize, 0.0);
+	
 	rAudio.assign(bufferSize, 0.0);
 	
 	soundStream.printDeviceList();
@@ -51,52 +58,77 @@ void ofApp::setup(){
 	//settings.setApi(ofSoundDevice::MS_DS);
 
 	auto devices = soundStream.getMatchingDevices("default");
+	
 	if(!devices.empty()){
+		
 		settings.setOutDevice(devices[0]);
+	
 	}
 
 
 
 
 	settings.setOutListener(this);
+	
 	settings.sampleRate = sampleRate;
+	
 	settings.numOutputChannels = 2;
+	
 	settings.numInputChannels = 0;
+	
 	settings.bufferSize = bufferSize;
-	soundStream.setup(settings);
 
 	// on OSX: if you want to use ofSoundPlayer together with ofSoundStream you need to synchronize buffersizes.
 	// use ofFmodSetBuffersize(bufferSize) to set the buffersize in fmodx prior to loading a file.
-}
 
+	soundStream.setup(settings);
 
-// --- Synth key setup (SAM) ---
+	// --- Synth key setup (SAM) ---
 
-baseFrequency = 440.0f; // A4 reference
+	baseFrequency = 440.0f; // A4 reference
 
-// Map keyboard keys to semitone offsets (from A4)
-keyMap = {
-    {'a', -9}, {'q', -9},                  // C4 - 'A' on QWERTY , 'Q' on AZERTY
-    {'w', -8}, {'z', -8},                 // C#4 - 'Z' on QWERTY , 'W' on AZERTY
-    {'s', -7},                           // D4
-    {'e', -6},                          // D#4
-    {'d', -5},                         // E4
-    {'f', -4}, 			      // F4
-    {'t', -3},                       // F#4
-    {'g', -2},                      // G4
-    {'y', -1},                     //G#4
-    {'h', 0}, 			  // A4
-    {'u', 1},                    // A#4
-    {'j', 2}                    // B4
+	// Map keyboard keys to semitone offsets (from A4)
+	
+	keyMap = {
+    	    
+	    {'a', -9}, {'q', -9},                  // C4 - 'A' on QWERTY , 'Q' on AZERTY
+    	    
+	    {'w', -8}, {'z', -8},                 // C#4 - 'Z' on QWERTY , 'W' on AZERTY
+    	    
+	    {'s', -7},                           // D4
+    	    
+	    {'e', -6},                          // D#4
+    	    
+	    {'d', -5},                         // E4
+    	    
+	    {'f', -4}, 			      // F4
+    	    
+	    {'t', -3},                       // F#4
+    	    
+	    {'g', -2},                      // G4
+    	    
+	    {'y', -1},                     //G#4
+    	    
+	    {'h', 0}, 		          // A4
+    	    
+	    {'u', 1},                    // A#4
+    	    
+	    {'j', 2}                    // B4
 
-};
+	};
 
+	
 
-// Set a default frequency
-targetFrequency = baseFrequency;
-phaseAdderTarget = (targetFrequency / (float)sampleRate) * glm::two_pi<float>();
+	// Set a default frequency
+	
+	targetFrequency = baseFrequency;
+	
+	phaseAdderTarget = (targetFrequency / (float)sampleRate) * glm::two_pi<float>();
+
+    }
 
 //--------------------------------------------------------------
+
 void ofApp::update(){
 
 }
