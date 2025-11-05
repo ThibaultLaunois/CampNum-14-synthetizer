@@ -171,41 +171,41 @@ void ofApp::keyReleased  (int key){
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
-	int width = ofGetWidth();
-	pan = (float)x / (float)width;
-	float height = (float)ofGetHeight();
-	float heightPct = ((height-y) / height);
-	targetFrequency = 2000.0f * heightPct;
-	phaseAdderTarget = (targetFrequency / (float) sampleRate) * glm::two_pi<float>();
-}
+//void ofApp::mouseMoved(int x, int y ){
+//	int width = ofGetWidth();
+//	pan = (float)x / (float)width;
+//	float height = (float)ofGetHeight();
+//	float heightPct = ((height-y) / height);
+//	targetFrequency = 2000.0f * heightPct;
+//	phaseAdderTarget = (targetFrequency / (float) sampleRate) * glm::two_pi<float>();
+//}
 
 //--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-	int width = ofGetWidth();
-	pan = (float)x / (float)width;
-}
+//void ofApp::mouseDragged(int x, int y, int button){
+//	int width = ofGetWidth();
+//	pan = (float)x / (float)width;
+//}
 
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-	bNoise = true;
-}
+//void ofApp::mousePressed(int x, int y, int button){
+//	bNoise = true;
+//}
 
 
 //--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-	bNoise = false;
-}
+//void ofApp::mouseReleased(int x, int y, int button){
+//	bNoise = false;
+//}
 
 //--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y){
-
-}
+//void ofApp::mouseEntered(int x, int y){
+//
+//}
 
 //--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y){
-
-}
+//void ofApp::mouseExited(int x, int y){
+//
+//}
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
