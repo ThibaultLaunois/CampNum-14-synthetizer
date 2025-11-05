@@ -40,4 +40,12 @@ class ofApp : public ofBaseApp{
 		float 	phase;
 		float 	phaseAdder;
 		float 	phaseAdderTarget;
+		
+		// ----------------------- New member variables 
+		std::map<int, int> keyMap;  // maps keyboard to semitone offsets
+		float baseFrequency;        // base frequency (A4 = 440Hz)
+
+		std::set<int> activeKeys; // keep track of keys pressed
+		std::vector<float> activeFreqs; // store corresponding frequencies
+
 };
