@@ -70,6 +70,32 @@ void ofApp::setup(){
 }
 
 
+// --- Synth key setup (SAM) ---
+
+baseFrequency = 440.0f; // A4 reference
+
+// Map keyboard keys to semitone offsets (from A4)
+keyMap = {
+    {'a', -9}, {'q', -9},                  // C4 - 'A' on QWERTY , 'Q' on AZERTY
+    {'w', -8}, {'z', -8},                 // C#4 - 'Z' on QWERTY , 'W' on AZERTY
+    {'s', -7},                           // D4
+    {'e', -6},                          // D#4
+    {'d', -5},                         // E4
+    {'f', -4}, 			      // F4
+    {'t', -3},                       // F#4
+    {'g', -2},                      // G4
+    {'y', -1},                     //G#4
+    {'h', 0}, 			  // A4
+    {'u', 1},                    // A#4
+    {'j', 2}                    // B4
+
+};
+
+
+// Set a default frequency
+targetFrequency = baseFrequency;
+phaseAdderTarget = (targetFrequency / (float)sampleRate) * glm::two_pi<float>();
+
 //--------------------------------------------------------------
 void ofApp::update(){
 
@@ -145,28 +171,85 @@ void ofApp::draw(){
 }
 
 
-//--------------------------------------------------------------
-void ofApp::keyPressed  (int key){
+//---------------------- (SAM edit) --------------------------------
+void ofApp::keyPressed(int key){
+
+	key = std::tolower(key); // normalize to lowercase
+	
+	// --- Volume control ---
+	
 	if (key == '-' || key == '_' ){
+		
 		volume -= 0.05;
+
 		volume = std::max(volume, 0.f);
+
+		return;
+
 	} else if (key == '+' || key == '=' ){
+		
 		volume += 0.05;
+		
 		volume = std::min(volume, 1.f);
+
+		return;
 	}
+
+	// --- Stream control ---
+
+	if( key == 's' ){soundStream.start(); return; }
+		
+	if( key == 'e' ){soundStream.stop(); return; }
+
+
+	// --- Synthesize key control (SAM edit) ---
 	
-	if( key == 's' ){
-		soundStream.start();
+	if (keyMap.find(key) != keyMap.end()) {
+	    
+	    // Add key to activate list (only once)
+	    activeKeys.insert(key);
+
+	    // Rebuild list of active frequencies
+	    
+	    activeFreqs.clear();
+	    
+	    for (auto k : activeKeys) { 
+
+	    	int i = keyMap[key];
+	    
+	    	float freq = baseFrequency * pow(2.0, i / 12.0);
+	    
+	    	activeFreqs.push_back(freq);
+	    }
+	    
+	    bNoise = false; // This ensures that a note is played and not noise
+
 	}
-	
-	if( key == 'e' ){
-		soundStream.stop();
-	}
-	
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased  (int key){
+
+	key = std::tolower(key);
+
+	if (activeKeys.find(key) != activeKeys.end()) {
+	    activeKeys.erase(key);
+
+	    // Rebuild list of active frequencies
+
+	    activeFreqs.clear();
+
+	    for (auto k : activeKeys) {
+
+		int i = keyMap[k];
+
+		float freq = baseFrequency * pow(2.0, i / 12.0);
+		
+		activeFreqs.push_back(freq);
+	    }
+	
+
+	}
 
 }
 
@@ -224,23 +307,53 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 		phase -= glm::two_pi<float>();
 	}
 
-	if ( bNoise == true){
-		// ---------------------- noise --------------
-		for (size_t i = 0; i < buffer.getNumFrames(); i++){
-			lAudio[i] = buffer[i*buffer.getNumChannels()    ] = ofRandom(0, 1) * volume * leftScale;
-			rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = ofRandom(0, 1) * volume * rightScale;
+	for (size_t i = 0; i < buffer.getNumFrames(); i++) {
+	    
+		float sample = 0.0f;
+
+		// If any keys are active, mix their sine waves
+		if (!activeFreqs.empty()) {
+		    
+		    for (auto freq : activeFreqs) {
+		        
+			float phaseStep = glm::two_pi<float>() * freq / sampleRate;
+
+			sample += sin(phase + i * phaseStep);
+		    } 
+
+		    // average to prevent clipping
+		    sample /= activeFreqs.size();
 		}
-	} else {
-		phaseAdder = 0.95f * phaseAdder + 0.05f * phaseAdderTarget;
-		for (size_t i = 0; i < buffer.getNumFrames(); i++){
-			phase += phaseAdder;
-			float sample = sin(phase);
-			lAudio[i] = buffer[i*buffer.getNumChannels()    ] = sample * volume * leftScale;
-			rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = sample * volume * rightScale;
-		}
+
+		// send to left/tight channels
+
+		lAudio[i] = buffer[i * buffer.getNumChannels()]   = sample * volume * leftScale;
+		rAudio[i] = buffer[i * buffer.getNumChannels() + 1] = sample * volume * rightScale;
+
 	}
 
-}
+	// increase phase for continuity
+	
+	phase += glm::two_pi<float>() * 440.0 / sampleRate;
+	
+	}
+
+	//if ( bNoise == true){
+		// ---------------------- noise --------------
+	//	for (size_t i = 0; i < buffer.getNumFrames(); i++){
+	//		lAudio[i] = buffer[i*buffer.getNumChannels()    ] = ofRandom(0, 1) * volume * leftScale;
+	//		rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = ofRandom(0, 1) * volume * rightScale;
+	//	}
+	//} else {
+	//	phaseAdder = 0.95f * phaseAdder + 0.05f * phaseAdderTarget;
+	//	for (size_t i = 0; i < buffer.getNumFrames(); i++){
+	//		phase += phaseAdder;
+	//		float sample = sin(phase);
+	//		lAudio[i] = buffer[i*buffer.getNumChannels()    ] = sample * volume * leftScale;
+	//		rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = sample * volume * rightScale;
+	//	}
+	//}
+
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
@@ -251,3 +364,5 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }
+
+
