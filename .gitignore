@@ -6,3 +6,13 @@ audioOutputExample.code-workspace
 audioOutputExample.png
 config.make
 Makefile
+
+# Ignore everything
+*
+
+# But not this file (so the .gitignore itself stays tracked)
+!.gitignore
+
+# Allow the src folder and its contents
+!src/
+!src/**
