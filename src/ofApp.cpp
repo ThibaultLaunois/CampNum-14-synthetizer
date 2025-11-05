@@ -1,4 +1,4 @@
-#include "ofApp.h"
+﻿#include "ofApp.h"
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -10,15 +10,16 @@ void ofApp::setup(){
 	phase 				= 0;
 	phaseAdder 			= 0.0f;
 	phaseAdderTarget 	= 0.0f;
-	volume				= 0.1f;
+	volume				= 0.4f;
 	bNoise 				= false;
 
 	lAudio.assign(bufferSize, 0.0);
 	rAudio.assign(bufferSize, 0.0);
 	
-	soundStream.printDeviceList();
-
+	pan = 0.5f; // ajout par marie => centre (sinon risque d'envoyer tout à droite/gauche)
 	ofSoundStreamSettings settings;
+
+	soundStream.printDeviceList();
 
 	// if you want to set the device id to be different than the default:
 	//
@@ -50,20 +51,16 @@ void ofApp::setup(){
 	//settings.setApi(ofSoundDevice::MS_WASAPI);
 	//settings.setApi(ofSoundDevice::MS_DS);
 
-	auto devices = soundStream.getMatchingDevices("default");
-	if(!devices.empty()){
-		settings.setOutDevice(devices[0]);
-	}
-
-
-
 
 	settings.setOutListener(this);
 	settings.sampleRate = sampleRate;
 	settings.numOutputChannels = 2;
 	settings.numInputChannels = 0;
 	settings.bufferSize = bufferSize;
+
+
 	soundStream.setup(settings);
+	soundStream.start();
 
 	// on OSX: if you want to use ofSoundPlayer together with ofSoundStream you need to synchronize buffersizes.
 	// use ofFmodSetBuffersize(bufferSize) to set the buffersize in fmodx prior to loading a file.
@@ -147,6 +144,8 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed  (int key){
+
+	// --- volume ---
 	if (key == '-' || key == '_' ){
 		volume -= 0.05;
 		volume = std::max(volume, 0.f);
@@ -155,19 +154,54 @@ void ofApp::keyPressed  (int key){
 		volume = std::min(volume, 1.f);
 	}
 	
-	if( key == 's' ){
-		soundStream.start();
-	}
+	//// --- audio start/stop ---
+	//if( key == 's' ){
+	//	soundStream.start();
+	//}
+	//
+	//if( key == 'e' ){
+	//	soundStream.stop();
+	//}
 	
-	if( key == 'e' ){
-		soundStream.stop();
-	}
-	
+	// --- notes : A => C4, W => C#4, ..., I => B4 ---
+	// Base Octave4 : A4 = 440 Hz ; C4 est 9 demi-tons sous A4
+	auto setNoteFromC4 = [&](int semitoneFromC4) {
+		const double A4 = 440.0; // <-- mets 400.0 si tu veux A4=400 Hz
+		const double C4 = A4 * std::pow(2.0, -9.0 / 12.0); // C4 = A4 - 9 demi-tons
+		targetFrequency = static_cast<float>(C4 * std::pow(2.0, semitoneFromC4 / 12.0));
+		// phaseAdderTarget = 2π * f / sampleRate
+		phaseAdderTarget = (targetFrequency / (float)sampleRate) * TWO_PI;
+		};
+
+	// Les 12 touches : A W D F T G Y H U J R I → C4, C#4, D4, D#4, E4, F4, F#4, G4, G#4, A4, A#4, B4.
+	if (key == 'a' || key == 'A' || key == 'q' || key == 'Q') { setNoteFromC4(0); }  // C4
+	else if (key == 'w' || key == 'W' || key == 'z' || key == 'Z') { setNoteFromC4(1); }  // C#4
+	else if (key == 's' || key == 'S') { setNoteFromC4(2); }  // D4
+	else if (key == 'e' || key == 'E') { setNoteFromC4(3); }  // D#4
+	else if (key == 'd' || key == 'D') { setNoteFromC4(4); }  // E4
+	else if (key == 'f' || key == 'F') { setNoteFromC4(5); }  // F4
+	else if (key == 't' || key == 'T') { setNoteFromC4(6); }  // F#4
+	else if (key == 'g' || key == 'G') { setNoteFromC4(7); }  // G4
+	else if (key == 'y' || key == 'Y') { setNoteFromC4(8); }  // G#4
+	else if (key == 'h' || key == 'H') { setNoteFromC4(9); }  // A4
+	else if (key == 'u' || key == 'U') { setNoteFromC4(10); }  // A#4
+	else if (key == 'j' || key == 'J') { setNoteFromC4(11); }  // B4
 }
+
 
 //--------------------------------------------------------------
 void ofApp::keyReleased  (int key){
-
+	// coupe le son quand on relâche l’une des 12 touches
+	if ((key == 'a' || key == 'A' || key == 'q' || key == 'Q') || 
+		(key == 'w' || key == 'W' || key == 'z' || key == 'Z') ||
+		(key == 'd' || key == 'D') ||
+		(key == 'f' || key == 'F') || (key == 't' || key == 'T') || (key == 'g' || key == 'G') ||
+		(key == 'y' || key == 'Y') || (key == 'h' || key == 'H') || (key == 'u' || key == 'U') ||
+		(key == 'j' || key == 'J') || (key == 's' || key == 'S') || (key == 'e' || key == 'E')) 
+		 {
+		targetFrequency = 0.0f;
+		phaseAdderTarget = 0.0f;
+	}
 }
 
 //--------------------------------------------------------------
@@ -215,8 +249,14 @@ void ofApp::windowResized(int w, int h){
 //--------------------------------------------------------------
 void ofApp::audioOut(ofSoundBuffer & buffer){
 	//pan = 0.5f;
-	float leftScale = 1 - pan;
+	pan = ofClamp(pan, 0.0f, 1.0f);
+	float leftScale = 1.0f - pan;
 	float rightScale = pan;
+
+	// assure la taille des vecteurs (au cas où)
+	if (lAudio.size() < buffer.getNumFrames()) lAudio.resize(buffer.getNumFrames());
+	if (rAudio.size() < buffer.getNumFrames()) rAudio.resize(buffer.getNumFrames());
+
 
 	// sin (n) seems to have trouble when n is very large, so we
 	// keep phase in the range of 0-glm::two_pi<float>() like this:
