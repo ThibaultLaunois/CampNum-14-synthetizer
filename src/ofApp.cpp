@@ -269,10 +269,10 @@ void ofApp::keyPressed  (int key){
 		
 		// Initialiser la phase pour cette note
 		float frequency = pianoKeys[index].frequency;
-		audioMutex.lock();
+//		audioMutex.lock();
 		activePhases[index] = 0.0f;
 		activePhaseAdders[index] = (frequency / (float)sampleRate) * glm::two_pi<float>();
-		audioMutex.unlock();
+//		audioMutex.unlock();
 	}
 
 }
@@ -285,10 +285,10 @@ void ofApp::keyReleased  (int key){
 	   pianoKeys[index].isPressed = false;
 	   
 	   // Retirer la note active
-	   audioMutex.lock();
+//	   audioMutex.lock();
 	   activePhases.erase(index);
 	   activePhaseAdders.erase(index);
-	   audioMutex.unlock();
+//	   audioMutex.unlock();
    }
 }
 
@@ -343,7 +343,7 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 		}
 		
 		// Verrouiller l'accès aux données audio
-		audioMutex.lock();
+//		audioMutex.lock();
 		for (size_t i = 0; i < buffer.getNumFrames(); i++){
 			float sample = 0.0f;
 			
@@ -378,7 +378,7 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 			buffer[i * buffer.getNumChannels()] = sample;
 			buffer[i * buffer.getNumChannels() + 1] = sample;
 		}
-		audioMutex.unlock();
+//		audioMutex.unlock();
 }
 
 //--------------------------------------------------------------
