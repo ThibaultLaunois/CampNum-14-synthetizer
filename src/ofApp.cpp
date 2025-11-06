@@ -247,7 +247,7 @@ void ofApp::keyPressed(int key){
 	    
 	    for (auto k : activeKeys) { 
 
-	    	int i = keyMap[key];
+	    	int i = keyMap[k];
 	    
 	    	float freq = baseFrequency * pow(2.0, i / 12.0);
 	    
