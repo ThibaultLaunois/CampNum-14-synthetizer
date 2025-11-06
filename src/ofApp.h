@@ -2,6 +2,8 @@
 
 #include "ofMain.h"
 
+#include "ofxFft.h"  // Declare the FFT object and data
+
 
 struct PianoKey {
 	ofRectangle rect;
@@ -71,4 +73,14 @@ class ofApp : public ofBaseApp{
 		int blackKeyWidth;
 		int blackKeyHeight;
 		int pianoStartY;
+
+
+		// For FFT analysis
+		
+		std::shared_ptr<ofxFft> fft;
+
+		std::vector<float> fftMagnitude;
+
+		std::vector<float> fftBins;
+
 };
