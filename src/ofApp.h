@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include <array> // ajout apr amrie => pour avoir plusieurs touches à la fois
 
 class ofApp : public ofBaseApp{
 
@@ -40,4 +41,13 @@ class ofApp : public ofBaseApp{
 		float 	phase;
 		float 	phaseAdder;
 		float 	phaseAdderTarget;
+
+
+		// ajout pour 
+		std::array<bool, 12>  noteOn{};               // quelles notes sont enfoncées
+		std::array<float, 12>  freqV{};                // fréquence par note
+		std::array<float, 12>  phaseV{};               // phase par note
+		std::array<float, 12>  phaseAdderV{};          // phaseAdder courant par note
+		std::array<float, 12>  phaseAdderTargetV{};    // cible par note
+
 };
