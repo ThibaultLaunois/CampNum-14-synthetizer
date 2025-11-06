@@ -78,6 +78,13 @@ void ofApp::setup(){
 
 	// on OSX: if you want to use ofSoundPlayer together with ofSoundStream you need to synchronize buffersizes.
 	// use ofFmodSetBuffersize(bufferSize) to set the buffersize in fmodx prior to loading a file.
+
+	
+	fft = ofxFft::create(512); //same as buffersize
+	
+	fftMagnitude.assign(fft->getBinSize(), 0.0);
+
+	fftBins.assign(fft->getBinSize(), 0.0)
 }
 
 
