@@ -329,7 +329,7 @@ void ofApp::windowResized(int w, int h){
 
 //--------------------------------------------------------------
 void ofApp::audioOut(ofSoundBuffer & buffer){
-	//pan = 0.5f;
+	pan = 0.5f;
 	float leftScale = 1 - pan;
 	float rightScale = pan;
 
