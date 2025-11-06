@@ -147,9 +147,26 @@ float ofApp::calculateFrequency(int semitonesFromA4){
 	return 440.0f * pow(2.0f, semitonesFromA4 / 12.0f);
 }
 
-//--------------------------------------------------------------
+//-------------- SAM update ------------------------------------------------
 void ofApp::update(){
+	
+	// check if the lAudio container is not empty
+	
+	if (!lAudio.empty()) { 
+	    
+	    fft->setSignal(&lAudio[0]); // sets the input signal for the FFT object
+	    
+	    float* amplitude = fft->getAmplitude(); // Retrieves the amplitude spectrum from the FFT
 
+	    // copy the FFT amplitude data into another array fftMagnitude
+	    
+	    for (int i = 0; i < fft->getBinSize(); i++) {
+	        
+	        fftMagnitude[i] = amplitude[i];
+	    }
+	    
+	    fft->update(); //update the FFT object
+	}
 }
 
 //--------------------------------------------------------------
