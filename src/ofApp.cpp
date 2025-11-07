@@ -231,7 +231,7 @@ void ofApp::draw(){
 	   
 	// Dessiner les formes d'onde
 	//drawWaveform();
-	drawFrequencySpectrum()
+	drawFrequencySpectrum();
 	   
 	// Dessiner le piano
 	drawPiano();
