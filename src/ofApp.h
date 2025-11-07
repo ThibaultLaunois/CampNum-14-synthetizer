@@ -63,6 +63,7 @@ class ofApp : public ofBaseApp{
 		// Synthesis
 		map<int, float> activePhases;
 		map<int, float> activePhaseAdders;
+		int numberOfHarmonics;
 		ofMutex audioMutex;
 		
 		// Visual

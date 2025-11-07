@@ -1,4 +1,4 @@
-#include "ofApp.h"
+﻿#include "ofApp.h"
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -8,15 +8,19 @@ void ofApp::setup(){
 	ofSetWindowShape(1400, 700);
 
 	int bufferSize		= 512;
-	sampleRate 			= 44100;
+	sampleRate 			= 10000;
 	//	phase 				= 0;
 	//	phaseAdder 			= 0.0f;
 	//	phaseAdderTarget 	= 0.0f;
 	volume				= 0.1f;
 	//	bNoise 				= false;
 
-	//	lAudio.assign(bufferSize, 0.0);
-	//	rAudio.assign(bufferSize, 0.0);
+	// mettre nos buffers audio à la bonne taille
+	lAudio.assign(bufferSize, 0.0);
+	rAudio.assign(bufferSize, 0.0);
+
+	// additive synthesis
+	numberOfHarmonics = 0;
 
 	// Piano dimensions
 	whiteKeyWidth = 40;
@@ -24,7 +28,7 @@ void ofApp::setup(){
 	blackKeyWidth = 24;
 	blackKeyHeight = 120;
 	pianoStartY = 400;
-	
+
 	setupPianoKeys();
 	
 	soundStream.printDeviceList();
@@ -106,9 +110,9 @@ void ofApp::setupPianoKeys(){
 			key.isBlack = isBlackKey[note];
 			key.isPressed = false;
 			key.noteName = noteNames[note] + ofToString(octave);
-			
+
 			int keyIndex = (octave - 3) * 12 + note;
-			if(keyIndex < keyboardKeys.length()){
+			if(keyIndex < (int) keyboardKeys.length()){
 				key.keyChar = keyboardKeys[keyIndex];
 				keyToIndex[key.keyChar] = pianoKeys.size();
 			}
@@ -149,15 +153,15 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	ofSetColor(225);
-	   ofDrawBitmapString("PIANO SYNTH - 3 OCTAVES", 32, 32);
-	   ofDrawBitmapString("Utilisez les touches du clavier: " + string("awsedftgyhujkolp;'[]\\zsxcfvgbnjmk,."), 32, 52);
-	   ofDrawBitmapString("Volume: " + ofToString(volume, 2) + " (touches +/- pour modifier)", 32, 72);
-	   
-	   // Dessiner les formes d'onde
-	   drawWaveform();
-	   
-	   // Dessiner le piano
-	   drawPiano();
+	ofDrawBitmapString("PIANO SYNTH - 3 OCTAVES", 32, 32);
+	ofDrawBitmapString("Utilisez les touches du clavier: " + string("awsedftgyhujkolp;'[]\\zsxcfvgbnjmk,."), 32, 52);
+	ofDrawBitmapString("Volume: " + ofToString(volume, 2) + " (touches +/- pour modifier)", 32, 72);
+	
+	// Dessiner les formes d'onde
+	drawWaveform();
+	
+	// Dessiner le piano
+	drawPiano();
 }
 
 
@@ -193,8 +197,10 @@ void ofApp::drawWaveform(){
 //--------------------------------------------------------------
 void ofApp::drawPiano(){
 	// Dessiner d'abord les touches blanches
+	
 	for(auto& key : pianoKeys){
 		if(!key.isBlack){
+			ofFill();
 			if(key.isPressed){
 				ofSetColor(100, 150, 255);
 			} else {
@@ -210,20 +216,23 @@ void ofApp::drawPiano(){
 			
 			// Texte de la touche
 			ofSetColor(40, 40, 40);
-			ofDrawBitmapString(string(1, key.keyChar),
-							 key.rect.x + key.rect.width/2 - 4,
-							 key.rect.y + key.rect.height - 10);
+			ofDrawBitmapString(
+				string(1, key.keyChar),
+				key.rect.x + key.rect.width/2 - 4,
+				key.rect.y + key.rect.height - 10);
 			
 			// Nom de la note
-			ofDrawBitmapString(key.noteName,
-							 key.rect.x + 5,
-							 key.rect.y + key.rect.height - 30);
+			ofDrawBitmapString(
+				key.noteName,
+				key.rect.x + 5,
+				key.rect.y + key.rect.height - 30);
 		}
 	}
 	
 	// Puis dessiner les touches noires par-dessus
 	for(auto& key : pianoKeys){
 		if(key.isBlack){
+			ofFill();
 			if(key.isPressed){
 				ofSetColor(100, 180, 255);
 			} else {
@@ -239,14 +248,16 @@ void ofApp::drawPiano(){
 			
 			// Texte de la touche
 			ofSetColor(240, 240, 240);
-			ofDrawBitmapString(string(1, key.keyChar),
-							 key.rect.x + key.rect.width/2 - 4,
-							 key.rect.y + key.rect.height - 10);
+			ofDrawBitmapString(
+				string(1, key.keyChar),
+				key.rect.x + key.rect.width/2 - 4,
+				key.rect.y + key.rect.height - 10);
 			
 			// Nom de la note
-			ofDrawBitmapString(key.noteName,
-							 key.rect.x + 2,
-							 key.rect.y + key.rect.height - 30);
+			ofDrawBitmapString(
+				key.noteName,
+				key.rect.x + 2,
+				key.rect.y + key.rect.height - 30);
 		}
 	}
 }
@@ -261,7 +272,7 @@ void ofApp::keyPressed  (int key){
 		volume += 0.05;
 		volume = std::min(volume, 1.0f);
 	}
-	
+	https://fr.overleaf.com/project/68c8136576670440ec8b8045/detached
 	// Vérifier si c'est une touche de piano
 	if(keyToIndex.find(key) != keyToIndex.end()){
 		int index = keyToIndex[key];
@@ -269,10 +280,8 @@ void ofApp::keyPressed  (int key){
 		
 		// Initialiser la phase pour cette note
 		float frequency = pianoKeys[index].frequency;
-//		audioMutex.lock();
-		activePhases[index] = 0.0f;
-		activePhaseAdders[index] = (frequency / (float)sampleRate) * glm::two_pi<float>();
-//		audioMutex.unlock();
+		activePhases[index] = 0;
+		activePhaseAdders[index] = (frequency/ (float) sampleRate) * glm::two_pi<float>();
 	}
 
 }
@@ -280,16 +289,14 @@ void ofApp::keyPressed  (int key){
 //--------------------------------------------------------------
 void ofApp::keyReleased  (int key){
 	// Vérifier si c'est une touche de piano
-   if(keyToIndex.find(key) != keyToIndex.end()){
-	   int index = keyToIndex[key];
-	   pianoKeys[index].isPressed = false;
-	   
-	   // Retirer la note active
-//	   audioMutex.lock();
-	   activePhases.erase(index);
-	   activePhaseAdders.erase(index);
-//	   audioMutex.unlock();
-   }
+    if(keyToIndex.find(key) != keyToIndex.end())
+	{
+		int index = keyToIndex[key];
+		pianoKeys[index].isPressed = false;
+		// Retirer la note active
+		activePhases.erase(index);
+		activePhaseAdders.erase(index);
+    }
 }
 
 //--------------------------------------------------------------
@@ -336,49 +343,56 @@ void ofApp::windowResized(int w, int h){
 
 //--------------------------------------------------------------
 void ofApp::audioOut(ofSoundBuffer & buffer){
-	// Vérifier que nos buffers audio sont de la bonne taille
-		if(lAudio.size() != buffer.getNumFrames()){
-			lAudio.resize(buffer.getNumFrames(), 0.0f);
-			rAudio.resize(buffer.getNumFrames(), 0.0f);
-		}
+	for (size_t i = 0; i < buffer.getNumFrames(); i++){
+		float sample = 0.0f;
 		
-		// Verrouiller l'accès aux données audio
-//		audioMutex.lock();
-		for (size_t i = 0; i < buffer.getNumFrames(); i++){
-			float sample = 0.0f;
+		// Additionner toutes les notes actives
+		for(auto &pair : activePhases)
+		{
+			int index = pair.first;
+			float &phase = pair.second;
+			float phaseAdder = activePhaseAdders[index];
 			
-			// Additionner toutes les notes actives
-			for(auto& pair : activePhases){
-				int index = pair.first;
-				float& phase = pair.second;
-				float phaseAdder = activePhaseAdders[index];
-				
-				phase += phaseAdder;
+			//std::cout << "index: "<< index << " phase: " << phase << std::endl;
+			// add the fundamental of the note
+			phase = phase + phaseAdder;
+			
+			// Garder la phase dans la plage 0-2π
+			phase = fmod(phase, glm::two_pi<float>());
+
+			// Normaliser si plusieurs notes sont jouées
+			sample += sin(phase)/activePhases.size()/(numberOfHarmonics+1);
+
+			//add harmonics
+			for (int j=1; j <= numberOfHarmonics; j++){
+				phase = phase*(1+j) + phaseAdder;
 				
 				// Garder la phase dans la plage 0-2π
-				while(phase > glm::two_pi<float>()){
-					phase -= glm::two_pi<float>();
-				}
-				
-				sample += sin(phase);
+				phase = fmod(phase, glm::two_pi<float>());
+
+				// Normaliser si plusieurs notes sont jouées
+				sample += sin(phase)/activePhases.size()/(numberOfHarmonics+1);
 			}
-			
-			// Normaliser si plusieurs notes sont jouées
-			if(activePhases.size() > 0){
-				sample /= sqrt((float)activePhases.size());
-			}
-			
-			sample *= volume;
-			
-			// Sauvegarder pour visualisation
-			lAudio[i] = sample;
-			rAudio[i] = sample;
-			
-			// Écrire dans le buffer de sortie
-			buffer[i * buffer.getNumChannels()] = sample;
-			buffer[i * buffer.getNumChannels() + 1] = sample;
 		}
-//		audioMutex.unlock();
+		
+		// Sauvegarder pour visualisation + écrire dans le buffer
+		lAudio[i] = buffer[i * buffer.getNumChannels()    ] = sample * volume;
+		rAudio[i] = buffer[i * buffer.getNumChannels() + 1] = sample * volume;
+	}
+
+	// Yiran code
+	// sin (n) seems to have trouble when n is very large, so we
+	// keep phase in the range of 0-glm::two_pi<float>() like this:
+
+    // for (size_t i = 0; i < buffer.getNumFrames(); i++){
+    //     float sample = 0.0f;
+    //     for (const auto &key: pressedKeys) {
+    //         freqPhases[key] = fmod(freqPhases[key] + freqPhaseAdders[key], glm::two_pi<float>());
+    //         sample += sin(freqPhases[key]) / pressedKeys.size();
+    //     }
+    //     lAudio[i] = buffer[i*buffer.getNumChannels()    ] = sample * volume;
+    //     rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = sample * volume;
+    // }
 }
 
 //--------------------------------------------------------------
