@@ -16,3 +16,6 @@ Makefile
 # Allow the src folder and its contents
 !src/
 !src/**
+
+!of_v0.12.1_vs_64_release/
+!of_v0.12.1_vs_64_release/**
