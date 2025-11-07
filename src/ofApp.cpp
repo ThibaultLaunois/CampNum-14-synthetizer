@@ -283,7 +283,7 @@ void ofApp::keyPressed  (int key){
 		activePhases[index] = 0;
 		activePhaseAdders[index] = (frequency/ (float) sampleRate) * glm::two_pi<float>();
 	}
-
+	// comentaire
 }
 
 //--------------------------------------------------------------
