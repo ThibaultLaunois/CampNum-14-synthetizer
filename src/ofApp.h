@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-
+#include "ofxGui.h"  // <--- ajouté par Marie
 
 struct PianoKey {
 	ofRectangle rect;
@@ -23,12 +23,15 @@ class ofApp : public ofBaseApp{
 
 		void keyPressed  (int key);
 		void keyReleased(int key);
-//		void mouseMoved(int x, int y );
+
+		// Active le clic souris sur les touches (UI only) // <--- modifié par Marie
+		void mouseMoved(int x, int y );
 //		void mouseDragged(int x, int y, int button);
-//		void mousePressed(int x, int y, int button);
-//		void mouseReleased(int x, int y, int button);
+		void mousePressed(int x, int y, int button);
+		void mouseReleased(int x, int y, int button);
 //		void mouseEntered(int x, int y);
 //		void mouseExited(int x, int y);
+
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
@@ -71,4 +74,33 @@ class ofApp : public ofBaseApp{
 		int blackKeyWidth;
 		int blackKeyHeight;
 		int pianoStartY;
+
+		// ---------- UI (nouveau) ---------- ajouté par Marie
+		ofxPanel gui;
+		ofParameter<float> pVolume;
+		ofParameter<bool>  pSustain;
+		ofParameter<int>   pOctave;
+		ofxButton          startBtn;
+		ofxButton          stopBtn;
+
+		// --- UI clavier ---
+		int  hoveredKey = -1;     // index de la touche survolée
+		bool mouseIsDown = false; // souris enfoncée sur une touche
+
+		// --- Synth ---
+		int  octaveOffset = 0;    // miroir de pOctave pour accès rapide
+		std::vector<float> baseFreqs;
+		std::vector<float> currFreqs;
+		// utilitaire pour reconstruire fréquences quand octave change
+		void rebuildFrequencies(int baseOctaveOffset);
+
+		// Callbacks UI
+		void onVolumeChanged(float& v);
+		void onOctaveChanged(int& off);
+		void onStartPressed();
+		void onStopPressed();
+
+		// fin ajout Marie
+
+
 };
