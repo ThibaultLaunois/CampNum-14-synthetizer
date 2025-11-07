@@ -21,7 +21,7 @@ void ofApp::setup(){
 	rAudio.assign(bufferSize, 0.0);
 
 	// additive synthesis
-	numberOfHarmonics = 2;
+	numberOfHarmonics = 5;
 
 	// Piano dimensions
 	whiteKeyWidth = 40;
@@ -369,7 +369,7 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 			
 			// Normalized the sound
 			sample /= activePhases.size();
-			sample /= (numberOfHarmonics + 1);
+			sample /= (numberOfHarmonics + 1)*10;
 
 			//add harmonics
 			// for (int j=1; j <= numberOfHarmonics; j++){
