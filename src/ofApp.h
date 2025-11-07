@@ -2,6 +2,17 @@
 
 #include "ofMain.h"
 
+
+struct PianoKey {
+	ofRectangle rect;
+	float frequency;
+	bool isBlack;
+	char keyChar;
+	bool isPressed;
+	string noteName;
+};
+
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -24,20 +35,40 @@ class ofApp : public ofBaseApp{
 		
 		void audioOut(ofSoundBuffer & buffer);
 		
+		void setupPianoKeys();
+		float calculateFrequency(int semitonesFromA4);
+		void drawPiano();
+		void drawWaveform();
 		
 		ofSoundStream soundStream;
 
-		float 	pan;
+		// float pan;
 		int		sampleRate;
-		bool 	bNoise;
+		//		bool 	bNoise;
 		float 	volume;
 
 		vector <float> lAudio;
 		vector <float> rAudio;
-		
+
 		//------------------- for the simple sine wave synthesis
-		float 	targetFrequency;
-		float 	phase;
-		float 	phaseAdder;
-		float 	phaseAdderTarget;
+		// float 	targetFrequency;
+		// float 	phase;
+		// float 	phaseAdder;
+		// float 	phaseAdderTarget;
+
+		// Piano keys
+		vector<PianoKey> pianoKeys;
+		map<char, int> keyToIndex;
+		
+		// Synthesis
+		map<int, float> activePhases;
+		map<int, float> activePhaseAdders;
+		ofMutex audioMutex;
+		
+		// Visual
+		int whiteKeyWidth;
+		int whiteKeyHeight;
+		int blackKeyWidth;
+		int blackKeyHeight;
+		int pianoStartY;
 };

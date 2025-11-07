@@ -4,17 +4,28 @@
 void ofApp::setup(){
 
 	ofBackground(34, 34, 34);
-	
+	ofSetWindowTitle("Mini Piano Synth");
+	ofSetWindowShape(1400, 700);
+
 	int bufferSize		= 512;
 	sampleRate 			= 44100;
-	phase 				= 0;
-	phaseAdder 			= 0.0f;
-	phaseAdderTarget 	= 0.0f;
+	//	phase 				= 0;
+	//	phaseAdder 			= 0.0f;
+	//	phaseAdderTarget 	= 0.0f;
 	volume				= 0.1f;
-	bNoise 				= false;
+	//	bNoise 				= false;
 
-	lAudio.assign(bufferSize, 0.0);
-	rAudio.assign(bufferSize, 0.0);
+	//	lAudio.assign(bufferSize, 0.0);
+	//	rAudio.assign(bufferSize, 0.0);
+
+	// Piano dimensions
+	whiteKeyWidth = 40;
+	whiteKeyHeight = 200;
+	blackKeyWidth = 24;
+	blackKeyHeight = 120;
+	pianoStartY = 400;
+	
+	setupPianoKeys();
 	
 	soundStream.printDeviceList();
 
@@ -71,103 +82,243 @@ void ofApp::setup(){
 
 
 //--------------------------------------------------------------
+void ofApp::setupPianoKeys(){
+	// Notes dans une octave: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
+	// Pattern des touches noires: après C, D, F, G, A (pas après E et B)
+	vector<string> noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+	vector<bool> isBlackKey = {false, true, false, true, false, false, true, false, true, false, true, false};
+	
+	// Clavier QWERTY pour 3 octaves (36 notes)
+	string keyboardKeys = "awsedftgyhujkolp;'[]\\zsxcfvgbnjmk,.";
+	
+	int whiteKeyIndex = 0;
+	int startX = 50;
+	
+	// 3 octaves (octave 3, 4, et 5)
+	for(int octave = 3; octave <= 5; octave++){
+		for(int note = 0; note < 12; note++){
+			// C de l'octave 4 est 9 demi-tons en dessous de A4 (440Hz)
+			// C3 est 21 demi-tons en dessous, C4 est 9 demi-tons en dessous
+			int semitonesFromA4 = (octave - 4) * 12 + (note - 9);
+			
+			PianoKey key;
+			key.frequency = calculateFrequency(semitonesFromA4);
+			key.isBlack = isBlackKey[note];
+			key.isPressed = false;
+			key.noteName = noteNames[note] + ofToString(octave);
+			
+			int keyIndex = (octave - 3) * 12 + note;
+			if(keyIndex < keyboardKeys.length()){
+				key.keyChar = keyboardKeys[keyIndex];
+				keyToIndex[key.keyChar] = pianoKeys.size();
+			}
+			
+			if(!key.isBlack){
+				// Touche blanche
+				key.rect.x = startX + whiteKeyIndex * whiteKeyWidth;
+				key.rect.y = pianoStartY;
+				key.rect.width = whiteKeyWidth;
+				key.rect.height = whiteKeyHeight;
+				whiteKeyIndex++;
+			} else {
+				// Touche noire - positionnée entre deux touches blanches
+				key.rect.x = startX + (whiteKeyIndex - 1) * whiteKeyWidth + whiteKeyWidth - blackKeyWidth/2;
+				key.rect.y = pianoStartY;
+				key.rect.width = blackKeyWidth;
+				key.rect.height = blackKeyHeight;
+			}
+			
+			pianoKeys.push_back(key);
+		}
+	}
+}
+
+
+//--------------------------------------------------------------
+float ofApp::calculateFrequency(int semitonesFromA4){
+	// Formule: f = 440 * 2^(n/12) où n est le nombre de demi-tons depuis A4
+	return 440.0f * pow(2.0f, semitonesFromA4 / 12.0f);
+}
+
+//--------------------------------------------------------------
 void ofApp::update(){
 
 }
+//array
+#define fftMagnitude 512
+float arr[fftMagnitude];
 
 //--------------------------------------------------------------
 void ofApp::draw(){
 
 	ofSetColor(225);
-	ofDrawBitmapString("AUDIO OUTPUT EXAMPLE", 32, 32);
-	ofDrawBitmapString("press 's' to unpause the audio\npress 'e' to pause the audio", 31, 92);
-	
+	   ofDrawBitmapString("PIANO SYNTH - 3 OCTAVES", 32, 32);
+	   ofDrawBitmapString("Utilisez les touches du clavier: " + string("awsedftgyhujkolp;'[]\\zsxcfvgbnjmk,."), 32, 52);
+	   ofDrawBitmapString("Volume: " + ofToString(volume, 2) + " (touches +/- pour modifier)", 32, 72);
+	   ofBackground(34, 34, 34);
+
+	   //array
+	   ofPushStyle();
+	   ofPushMatrix();
+	   ofTranslate(32, 50);
+
+	   ofSetColor(225);
+	   ofDrawBitmapString("Array Visualization", 4, 18);
+
+	   ofSetLineWidth(1);
+	   ofDrawRectangle(0, 0, 900, 200);
+
+	   ofSetColor(245, 58, 135);
+	   ofSetLineWidth(2);
+
+	   ofBeginShape();
+	   for (unsigned int i = 0; i < fftMagnitude; i++) {
+		   float x = ofMap(i, 0, fftMagnitude - 1, 0, 900, true);
+		   float y = 100 - arr[i] * 180.0f;
+		   ofVertex(x, y);
+	   }
+	   ofEndShape(false);
+
+	   ofPopMatrix();
+	   ofPopStyle();
+
+	   // Dessiner les formes d'onde
+	   drawWaveform();
+	   
+	   // Dessiner le piano
+	   drawPiano();
+}
+
+
+//--------------------------------------------------------------
+void ofApp::drawWaveform(){
 	ofNoFill();
-	
-	// draw the left channel:
 	ofPushStyle();
-		ofPushMatrix();
-		ofTranslate(32, 150, 0);
-			
-		ofSetColor(225);
-		ofDrawBitmapString("Left Channel", 4, 18);
-		
-		ofSetLineWidth(1);	
-		ofDrawRectangle(0, 0, 900, 200);
-
-		ofSetColor(245, 58, 135);
-		ofSetLineWidth(3);
-					
-			ofBeginShape();
-			for (unsigned int i = 0; i < lAudio.size(); i++){
-				float x =  ofMap(i, 0, lAudio.size(), 0, 900, true);
-				ofVertex(x, 100 -lAudio[i]*180.0f);
-			}
-			ofEndShape(false);
-			
-		ofPopMatrix();
-	ofPopStyle();
-
-	// draw the right channel:
-	ofPushStyle();
-		ofPushMatrix();
-		ofTranslate(32, 350, 0);
-			
-		ofSetColor(225);
-		ofDrawBitmapString("Right Channel", 4, 18);
-		
-		ofSetLineWidth(1);	
-		ofDrawRectangle(0, 0, 900, 200);
-
-		ofSetColor(245, 58, 135);
-		ofSetLineWidth(3);
-					
-			ofBeginShape();
-			for (unsigned int i = 0; i < rAudio.size(); i++){
-				float x =  ofMap(i, 0, rAudio.size(), 0, 900, true);
-				ofVertex(x, 100 -rAudio[i]*180.0f);
-			}
-			ofEndShape(false);
-			
-		ofPopMatrix();
-	ofPopStyle();
+	ofPushMatrix();
+	ofTranslate(50, 120, 0);
 	
 		
 	ofSetColor(225);
-	string reportString = "volume: ("+ofToString(volume, 2)+") modify with -/+ keys\npan: ("+ofToString(pan, 2)+") modify with mouse x\nsynthesis: ";
-	if( !bNoise ){
-		reportString += "sine wave (" + ofToString(targetFrequency, 2) + "hz) modify with mouse y";
-	}else{
-		reportString += "noise";	
+	ofDrawBitmapString("Waveform", 4, -10);
+	
+	ofSetLineWidth(1);
+	ofSetColor(80, 80, 80);
+	ofDrawRectangle(0, 0, 1300, 200);
+	
+	ofSetColor(245, 58, 135);
+	ofSetLineWidth(2);
+	
+	ofBeginShape();
+	for (unsigned int i = 0; i < lAudio.size(); i++){
+		float x = ofMap(i, 0, lAudio.size(), 0, 1300, true);
+		ofVertex(x, 100 - lAudio[i] * 90.0f);
 	}
-	ofDrawBitmapString(reportString, 32, 579);
+	ofEndShape(false);
+	
+	ofPopMatrix();
+	ofPopStyle();
+}
 
+//--------------------------------------------------------------
+void ofApp::drawPiano(){
+	// Dessiner d'abord les touches blanches
+	for(auto& key : pianoKeys){
+		if(!key.isBlack){
+			if(key.isPressed){
+				ofSetColor(100, 150, 255);
+			} else {
+				ofSetColor(240, 240, 240);
+			}
+			ofDrawRectangle(key.rect);
+			
+			// Bordure
+			ofSetColor(40, 40, 40);
+			ofNoFill();
+			ofDrawRectangle(key.rect);
+			ofFill();
+			
+			// Texte de la touche
+			ofSetColor(40, 40, 40);
+			ofDrawBitmapString(string(1, key.keyChar),
+							 key.rect.x + key.rect.width/2 - 4,
+							 key.rect.y + key.rect.height - 10);
+			
+			// Nom de la note
+			ofDrawBitmapString(key.noteName,
+							 key.rect.x + 5,
+							 key.rect.y + key.rect.height - 30);
+		}
+	}
+	
+	// Puis dessiner les touches noires par-dessus
+	for(auto& key : pianoKeys){
+		if(key.isBlack){
+			if(key.isPressed){
+				ofSetColor(100, 180, 255);
+			} else {
+				ofSetColor(20, 20, 20);
+			}
+			ofDrawRectangle(key.rect);
+			
+			// Bordure
+			ofSetColor(0, 0, 0);
+			ofNoFill();
+			ofDrawRectangle(key.rect);
+			ofFill();
+			
+			// Texte de la touche
+			ofSetColor(240, 240, 240);
+			ofDrawBitmapString(string(1, key.keyChar),
+							 key.rect.x + key.rect.width/2 - 4,
+							 key.rect.y + key.rect.height - 10);
+			
+			// Nom de la note
+			ofDrawBitmapString(key.noteName,
+							 key.rect.x + 2,
+							 key.rect.y + key.rect.height - 30);
+		}
+	}
 }
 
 
 //--------------------------------------------------------------
 void ofApp::keyPressed  (int key){
-	if (key == '-' || key == '_' ){
+	if (key == '-' || key == '_') {
 		volume -= 0.05;
-		volume = std::max(volume, 0.f);
-	} else if (key == '+' || key == '=' ){
+		volume = std::max(volume, 0.0f);
+	} else if (key == '+' || key == '='){
 		volume += 0.05;
-		volume = std::min(volume, 1.f);
+		volume = std::min(volume, 1.0f);
 	}
 	
-	if( key == 's' ){
-		soundStream.start();
+	// Vérifier si c'est une touche de piano
+	if(keyToIndex.find(key) != keyToIndex.end()){
+		int index = keyToIndex[key];
+		pianoKeys[index].isPressed = true;
+		
+		// Initialiser la phase pour cette note
+		float frequency = pianoKeys[index].frequency;
+//		audioMutex.lock();
+		activePhases[index] = 0.0f;
+		activePhaseAdders[index] = (frequency / (float)sampleRate) * glm::two_pi<float>();
+//		audioMutex.unlock();
 	}
-	
-	if( key == 'e' ){
-		soundStream.stop();
-	}
-	
+
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased  (int key){
-
+	// Vérifier si c'est une touche de piano
+   if(keyToIndex.find(key) != keyToIndex.end()){
+	   int index = keyToIndex[key];
+	   pianoKeys[index].isPressed = false;
+	   
+	   // Retirer la note active
+//	   audioMutex.lock();
+	   activePhases.erase(index);
+	   activePhaseAdders.erase(index);
+//	   audioMutex.unlock();
+   }
 }
 
 //--------------------------------------------------------------
@@ -214,32 +365,49 @@ void ofApp::windowResized(int w, int h){
 
 //--------------------------------------------------------------
 void ofApp::audioOut(ofSoundBuffer & buffer){
-	//pan = 0.5f;
-	float leftScale = 1 - pan;
-	float rightScale = pan;
-
-	// sin (n) seems to have trouble when n is very large, so we
-	// keep phase in the range of 0-glm::two_pi<float>() like this:
-	while (phase > glm::two_pi<float>()){
-		phase -= glm::two_pi<float>();
-	}
-
-	if ( bNoise == true){
-		// ---------------------- noise --------------
-		for (size_t i = 0; i < buffer.getNumFrames(); i++){
-			lAudio[i] = buffer[i*buffer.getNumChannels()    ] = ofRandom(0, 1) * volume * leftScale;
-			rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = ofRandom(0, 1) * volume * rightScale;
+	// Vérifier que nos buffers audio sont de la bonne taille
+		if(lAudio.size() != buffer.getNumFrames()){
+			lAudio.resize(buffer.getNumFrames(), 0.0f);
+			rAudio.resize(buffer.getNumFrames(), 0.0f);
 		}
-	} else {
-		phaseAdder = 0.95f * phaseAdder + 0.05f * phaseAdderTarget;
+		
+		// Verrouiller l'accès aux données audio
+//		audioMutex.lock();
 		for (size_t i = 0; i < buffer.getNumFrames(); i++){
-			phase += phaseAdder;
-			float sample = sin(phase);
-			lAudio[i] = buffer[i*buffer.getNumChannels()    ] = sample * volume * leftScale;
-			rAudio[i] = buffer[i*buffer.getNumChannels() + 1] = sample * volume * rightScale;
+			float sample = 0.0f;
+			
+			// Additionner toutes les notes actives
+			for(auto& pair : activePhases){
+				int index = pair.first;
+				float& phase = pair.second;
+				float phaseAdder = activePhaseAdders[index];
+				
+				phase += phaseAdder;
+				
+				// Garder la phase dans la plage 0-2π
+				while(phase > glm::two_pi<float>()){
+					phase -= glm::two_pi<float>();
+				}
+				
+				sample += sin(phase);
+			}
+			
+			// Normaliser si plusieurs notes sont jouées
+			if(activePhases.size() > 0){
+				sample /= sqrt((float)activePhases.size());
+			}
+			
+			sample *= volume;
+			
+			// Sauvegarder pour visualisation
+			lAudio[i] = sample;
+			rAudio[i] = sample;
+			
+			// Écrire dans le buffer de sortie
+			buffer[i * buffer.getNumChannels()] = sample;
+			buffer[i * buffer.getNumChannels() + 1] = sample;
 		}
-	}
-
+//		audioMutex.unlock();
 }
 
 //--------------------------------------------------------------
