@@ -21,7 +21,7 @@ void ofApp::setup(){
 	rAudio.assign(bufferSize, 0.0);
 
 	// additive synthesis
-	numberOfHarmonics = 5;
+	numberOfHarmonics = 2;
 
 	// Piano dimensions
 	whiteKeyWidth = 40;
