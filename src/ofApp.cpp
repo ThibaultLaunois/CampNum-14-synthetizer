@@ -85,7 +85,7 @@ void ofApp::setup(){
 	
 	fftMagnitude.assign(fft->getBinSize(), 0.0);
 
-	fftBins.assign(fft->getBinSize(), 0.0)
+	fftBins.assign(fft->getBinSize(), 0.0);
 }
 
 
@@ -166,7 +166,7 @@ void ofApp::update(){
 	        fftMagnitude[i] = amplitude[i];
 	    }
 	    
-	    fft->update(); //update the FFT object
+	    //fft->update(); //update the FFT object
 	}
 }
 
@@ -176,7 +176,7 @@ void ofApp::drawFrequencySpectrum() {
 	
 	if (fftMagnitude.empty()) return; // empty fft magnitude; nothing to draw yet
 	
-	ofNofill();
+	ofNoFill();
 
 	ofPushStyle();
 
