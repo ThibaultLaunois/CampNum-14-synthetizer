@@ -75,8 +75,7 @@ class ofApp : public ofBaseApp{
 		int blackKeyHeight;
 		int pianoStartY;
 
-
-		// For FFT analysis
+		// --- For FFT analysis ----
 		
 		ofxFft* fft;
 

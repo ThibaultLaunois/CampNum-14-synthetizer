@@ -171,53 +171,6 @@ void ofApp::update(){
 }
 
 
-//---------------------- SAM draw Frequency Spectrun ------------------------
-void ofApp::drawFrequencySpectrum() {
-	
-	if (fftMagnitude.empty()) return; // empty fft magnitude; nothing to draw yet
-	
-	ofNoFill();
-
-	ofPushStyle();
-
-	ofPushMatrix();
-
-	ofTranslate(50, 120, 0); // position on screen
-
-	ofSetColor(225);
-
-	ofDrawBitmapString("Frequency spectrum", 4, -10);
-
-	ofSetLineWidth(1);
-
-	ofSetColor(80, 80, 80);
-
-	ofDrawRectangle(0, 0, 1300, 200);
-
-	ofSetColor(0, 255, 100);
-
-	ofSetLineWidth(2);
-
-	ofBeginShape();
-
-	for (unsigned int i = 0; i < fftMagnitude.size(); i++) {
-	    
-	    float x = ofMap(i, 0, fftMagnitude.size(), 0, 1300, true);
-
-	    float y = 200 - ofClamp(fftMagnitude[i] * 30, 0, 200);
-
-	    ofVertex(x, y);
-
-	}
-
-	ofEndShape(false);
-
-	ofPopMatrix();
-
-	ofPopStyle();
-
-}
-
 //--------------------------------------------------------------
 void ofApp::draw(){
 
@@ -228,7 +181,7 @@ void ofApp::draw(){
 	   
 	// Dessiner les formes d'onde
 	//drawWaveform();
-	drawFrequencySpectrum();
+	
 	   
 	// Dessiner le piano
 	drawPiano();
