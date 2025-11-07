@@ -78,7 +78,7 @@ class ofApp : public ofBaseApp{
 
 		// For FFT analysis
 		
-		std::shared_ptr<ofxFft> fft;
+		ofxFft* fft;
 
 		std::vector<float> fftMagnitude;
 
