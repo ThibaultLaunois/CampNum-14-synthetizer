@@ -41,6 +41,7 @@ class ofApp : public ofBaseApp{
 		float calculateFrequency(int semitonesFromA4);
 		void drawPiano();
 		void drawWaveform();
+		void drawFrequencySpectrum();
 		
 		ofSoundStream soundStream;
 
