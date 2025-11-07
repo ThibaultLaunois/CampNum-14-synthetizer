@@ -1,4 +1,5 @@
 ﻿#include "ofApp.h"
+#include <vector>
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -20,7 +21,7 @@ void ofApp::setup(){
 	rAudio.assign(bufferSize, 0.0);
 
 	// additive synthesis
-	numberOfHarmonics = 0;
+	numberOfHarmonics = 2;
 
 	// Piano dimensions
 	whiteKeyWidth = 40;
@@ -93,7 +94,7 @@ void ofApp::setupPianoKeys(){
 	vector<bool> isBlackKey = {false, true, false, true, false, false, true, false, true, false, true, false};
 	
 	// Clavier QWERTY pour 3 octaves (36 notes)
-	string keyboardKeys = "awsedftgyhujkolp;'[]\\zsxcfvgbnjmk,.";
+	string keyboardKeys = "awsedftgyhujkolp;'[]\\z$xcpvùbnjmk,.";
 	
 	int whiteKeyIndex = 0;
 	int startX = 50;
@@ -272,7 +273,7 @@ void ofApp::keyPressed  (int key){
 		volume += 0.05;
 		volume = std::min(volume, 1.0f);
 	}
-	https://fr.overleaf.com/project/68c8136576670440ec8b8045/detached
+
 	// Vérifier si c'est une touche de piano
 	if(keyToIndex.find(key) != keyToIndex.end()){
 		int index = keyToIndex[key];
@@ -336,9 +337,9 @@ void ofApp::keyReleased  (int key){
 //}
 
 //--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
+// void ofApp::windowResized(int w, int h){
 
-}
+// }
 
 //--------------------------------------------------------------
 void ofApp::audioOut(ofSoundBuffer & buffer){
@@ -346,8 +347,7 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 		float sample = 0.0f;
 		
 		// Additionner toutes les notes actives
-		for(auto &pair : activePhases)
-		{
+		for(auto &pair : activePhases){
 			int index = pair.first;
 			float &phase = pair.second;
 			float phaseAdder = activePhaseAdders[index];
@@ -359,19 +359,28 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 			// Garder la phase dans la plage 0-2π
 			phase = fmod(phase, glm::two_pi<float>());
 
-			// Normaliser si plusieurs notes sont jouées
-			sample += sin(phase)/activePhases.size()/(numberOfHarmonics+1);
+			// add fundamental note
+			sample+=sin(phase)*0.80;
+
+			// add harmonics
+			for (int k = 2; k < numberOfHarmonics+2; k++){
+				sample += sin(fmod(phase*k, glm::two_pi<float>()))/(0.2/numberOfHarmonics);
+			}
+			
+			// Normalized the sound
+			sample /= activePhases.size();
+			sample /= (numberOfHarmonics + 1);
 
 			//add harmonics
-			for (int j=1; j <= numberOfHarmonics; j++){
-				phase = phase*(1+j) + phaseAdder;
+			// for (int j=1; j <= numberOfHarmonics; j++){
+			// 	phase = phase*(1+j) + phaseAdder;
 				
-				// Garder la phase dans la plage 0-2π
-				phase = fmod(phase, glm::two_pi<float>());
+			// 	// Garder la phase dans la plage 0-2π
+			// 	phase = fmod(phase, glm::two_pi<float>());
 
-				// Normaliser si plusieurs notes sont jouées
-				sample += sin(phase)/activePhases.size()/(numberOfHarmonics+1);
-			}
+			// 	// Normaliser si plusieurs notes sont jouées
+			// 	sample += sin(phase)/activePhases.size()/(numberOfHarmonics+1)*0.9*i;
+			// }
 		}
 		
 		// Sauvegarder pour visualisation + écrire dans le buffer
@@ -395,11 +404,11 @@ void ofApp::audioOut(ofSoundBuffer & buffer){
 }
 
 //--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
+// void ofApp::gotMessage(ofMessage msg){
 
-}
+// }
 
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
+// //--------------------------------------------------------------
+// void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
-}
+// }
